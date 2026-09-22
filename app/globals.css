@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --ink: #0b1f2e;
+  --ink-raised: #102a3d;
+  --paper: #e7e4d6;
+  --paper-dim: #d9d5c4;
+  --brass: #b8863b;
+  --brass-bright: #d2a35c;
+  --depth: #1b4b5a;
+  --signal: #4a7c59;
+  --alert: #c4553d;
+  --line: rgba(231, 228, 214, 0.14);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-raised: var(--ink-raised);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-brass: var(--brass);
+  --color-brass-bright: var(--brass-bright);
+  --color-depth: var(--depth);
+  --color-signal: var(--signal);
+  --color-alert: var(--alert);
+  --font-display: 'Fraunces', serif;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+}
+
+.rule {
+  border-color: var(--line);
+}
+
+::selection {
+  background: var(--brass);
+  color: var(--ink);
+}
