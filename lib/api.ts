@@ -63,7 +63,7 @@ export const api = {
     vessel_class: string; speed_kn: number; draft_ratio: number;
     wind_kn?: number; wave_hs_m?: number; temp_c?: number; fuel_type?: string;
   }) =>
-    request<{ fuel_t_per_day: number; q10: number; q90: number }>("/predict", {
+    request<{ fuel_t_per_day: number; q10: number; q90: number; shap_top3: [string, number][] }>("/predict", {
       method: "POST",
       body: JSON.stringify(params),
     }),

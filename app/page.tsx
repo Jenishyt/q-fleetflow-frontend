@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const benchmarkRows = [
-  { algo: "Greedy heuristic", hv: "1,177", feas: "0%", cost: "$142,551" },
-  { algo: "Random search", hv: "2,511 ± 79", feas: "80.8%", cost: "$109,018" },
-  { algo: "QIEA (ours)", hv: "2,849 ± 91", feas: "92.5%", cost: "$92,944", highlight: true },
-  { algo: "NSGA-II", hv: "3,564 ± 54", feas: "83.8%", cost: "$60,244" },
+  { algo: "Greedy heuristic", hv: "10.7B", feas: "0%", cost: "$142,551" },
+  { algo: "Random search", hv: "21.3B ± 0.3B", feas: "67.1%", cost: "$109,018" },
+  { algo: "QIEA (ours)", hv: "22.7B ± 0.2B", feas: "86.9%", cost: "$109,755", highlight: true },
+  { algo: "NSGA-II", hv: "27.7B ± 0.4B", feas: "73.0%", cost: "$61,263" },
 ];
 
 export default function OverviewPage() {
