@@ -47,6 +47,17 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export type Port = { name: string; country: string; locode: string; lat: number; lon: number };
+export type Vessel = {
+  id: string; name: string; vessel_class: string; capacity_dwt: number;
+  design_speed_kn: number; engine_power_kw: number; max_draft_m: number;
+  fuel_type: string; status: string;
+};
+export type RouteGeometry = {
+  name: string; distance_nm: number; demand_dwt_per_week: number;
+  fuel_availability: string[]; origin: Port | null; destination: Port | null;
+};
+
 export const api = {
   health: () => request<HealthResponse>("/health"),
 
@@ -67,4 +78,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify(params),
     }),
+
+  ports: () => request<{ ports: Port[] }>("/ports"),
+
+  fleet: () => request<{ vessels: Vessel[] }>("/fleet"),
+
+  registerVessel: (params: { name: string; vessel_class: string; fuel_type?: string }) =>
+    request<Vessel>("/fleet", { method: "POST", body: JSON.stringify(params) }),
+
+  routes: () => request<{ routes: RouteGeometry[] }>("/routes"),
 };
