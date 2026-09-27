@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { api, Port } from "@/lib/api";
+import Skeleton from "@/components/Skeleton";
 
 export default function PortsPage() {
   const [ports, setPorts] = useState<Port[] | null>(null);
@@ -38,7 +39,11 @@ export default function PortsPage() {
       />
 
       {error && <p className="text-alert text-sm">{error}</p>}
-      {!ports && !error && <p className="text-paper/50 text-sm font-mono">Loading...</p>}
+      {!ports && !error && (
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
+        </div>
+      )}
 
       {ports && (
         <table className="w-full text-sm">
@@ -55,7 +60,7 @@ export default function PortsPage() {
               <motion.tr
                 key={p.locode}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.03, 0.4) }}
-                className="border-b rule/50"
+                className="border-b rule/50 row-hover"
               >
                 <td className="py-2">{p.name}</td>
                 <td className="py-2 text-paper/70">{p.country}</td>

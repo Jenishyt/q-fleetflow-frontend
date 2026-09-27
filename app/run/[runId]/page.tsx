@@ -92,6 +92,16 @@ export default function RunExplorerPage() {
         Pareto explorer
       </motion.h1>
 
+      <details className="mb-6">
+        <summary className="text-xs text-brass-bright cursor-pointer select-none">What is a Pareto front?</summary>
+        <p className="mt-2 text-xs text-paper/60 max-w-2xl border rule rounded-sm p-4 bg-ink-raised/50">
+          Every point below is a fleet plan where you can't improve one objective (cost, GHG, or
+          schedule risk) without making another one worse — that's what "non-dominated" means.
+          There's no single "best" plan; the frontier shows you the real trade-offs so you pick
+          the one that fits your priorities.
+        </p>
+      </details>
+
       {stats && (
         <div className="grid grid-cols-4 gap-4 mb-8">
           <StatCard label="Plans found" value={stats.total} delay={0} />

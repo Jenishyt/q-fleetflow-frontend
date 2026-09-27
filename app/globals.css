@@ -43,3 +43,56 @@ body {
   background: var(--brass);
   color: var(--ink);
 }
+
+@keyframes scan-line {
+  0% { background-position: 0% -100%; }
+  100% { background-position: 0% 200%; }
+}
+.animate-scan-line {
+  background: linear-gradient(180deg, transparent 0%, rgba(79,70,229,0.08) 50%, transparent 100%);
+  background-size: 100% 50%;
+  animation: scan-line 2.6s linear infinite;
+}
+
+/* Glitch hover effect on the nav logo - RGB channel split + jitter */
+@keyframes glitch-shift {
+  0%, 100% { transform: translate(0, 0); opacity: 1; }
+  20% { transform: translate(-2px, 1px); opacity: 0.9; }
+  40% { transform: translate(2px, -1px); opacity: 0.95; }
+  60% { transform: translate(-1px, -1px); opacity: 0.9; }
+  80% { transform: translate(1px, 1px); opacity: 1; }
+}
+.glitch-logo {
+  position: relative;
+  display: inline-block;
+}
+.glitch-logo:hover {
+  animation: glitch-shift 0.25s steps(2, end) 2;
+}
+.glitch-logo:hover::before,
+.glitch-logo:hover::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ink);
+}
+.glitch-logo:hover::before {
+  color: #ff3366;
+  animation: glitch-shift 0.3s steps(2, end) 2;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+.glitch-logo:hover::after {
+  color: #33e6ff;
+  animation: glitch-shift 0.2s steps(2, end) 2 reverse;
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+
+.row-hover {
+  transition: background-color 0.15s, transform 0.15s;
+}
+.row-hover:hover {
+  background-color: rgba(184,134,59,0.06);
+  transform: translateX(2px);
+}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, Vessel } from "@/lib/api";
+import Skeleton from "@/components/Skeleton";
 
 const VESSEL_CLASSES = ["container", "bulk_carrier", "tanker", "general_cargo"];
 const FUEL_TYPES = ["MDO", "VLSFO", "HFO", "LNG"];
@@ -88,7 +89,11 @@ export default function FleetPage() {
       </div>
 
       {error && <p className="text-alert text-sm mb-4">{error}</p>}
-      {!vessels && !error && <p className="text-paper/50 text-sm font-mono">Loading...</p>}
+      {!vessels && !error && (
+        <div className="space-y-2">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
+        </div>
+      )}
 
       {vessels && (
         <table className="w-full text-sm">
@@ -109,7 +114,7 @@ export default function FleetPage() {
                 <motion.tr
                   key={v.id}
                   initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-                  className="border-b rule/50"
+                  className="border-b rule/50 row-hover"
                 >
                   <td className="py-2 font-mono text-xs text-paper/50">{v.id}</td>
                   <td className="py-2">{v.name}</td>

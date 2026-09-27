@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import InfoTip from "@/components/InfoTip";
+import TiltCard from "@/components/TiltCard";
 
 const benchmarkRows = [
   { algo: "Greedy heuristic", hv: 10.7, feas: 0, cost: 142551 },
@@ -54,14 +56,24 @@ export default function OverviewPage() {
                 Try a live prediction
               </motion.span>
             </Link>
+            <Link href="/roadmap">
+              <motion.span
+                whileHover={{ scale: 1.03 }}
+                className="inline-block px-5 py-2.5 rounded-sm font-medium text-sm cursor-pointer text-paper/50 hover:text-paper/80"
+              >
+                What's coming next →
+              </motion.span>
+            </Link>
           </div>
         </motion.div>
 
         <motion.div
           initial="hidden" animate="show" custom={1} variants={fadeUp}
-          className="border rule rounded-sm p-6 bg-ink-raised"
         >
-          <p className="font-mono text-[11px] text-paper/50 mb-4">10-seed benchmark, Wilcoxon-tested</p>
+        <TiltCard className="border rule rounded-sm p-6 bg-ink-raised">
+          <p className="font-mono text-[11px] text-paper/50 mb-4">
+            10-seed benchmark, Wilcoxon-tested
+          </p>
           <div className="space-y-4">
             {benchmarkRows.map((r, i) => (
               <motion.div
@@ -74,18 +86,21 @@ export default function OverviewPage() {
                 <div className="flex items-baseline justify-between mb-1">
                   <span className={`text-sm ${r.highlight ? "text-brass-bright" : "text-paper/80"}`}>{r.algo}</span>
                   <span className="font-mono text-xs text-paper/40">
-                    HV <AnimatedNumber value={r.hv} decimals={1} suffix="B" />
+                    <InfoTip term="HV">Hypervolume — the volume of solution-space a Pareto front dominates. Higher means more/better trade-off coverage.</InfoTip>{" "}
+                    <AnimatedNumber value={r.hv} decimals={1} suffix="B" />
                   </span>
                 </div>
                 <div className="flex items-baseline gap-4 font-mono text-sm">
                   <span>$<AnimatedNumber value={r.cost} /></span>
                   <span className="text-paper/50 text-xs">
-                    <AnimatedNumber value={r.feas} decimals={1} suffix="%" /> feasible
+                    <AnimatedNumber value={r.feas} decimals={1} suffix="%" />{" "}
+                    <InfoTip term="feasible">Share of this algorithm's plans that pass the FuelEU Maritime carbon-intensity limit.</InfoTip>
                   </span>
                 </div>
               </motion.div>
             ))}
           </div>
+        </TiltCard>
         </motion.div>
       </div>
 
@@ -111,8 +126,10 @@ export default function OverviewPage() {
             viewport={{ once: true, margin: "-40px" }}
             transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <p className={`font-mono text-xs ${card.color} mb-2`}>{card.title}</p>
-            <p className="text-sm text-paper/70 leading-relaxed">{card.body}</p>
+            <TiltCard className="p-1">
+              <p className={`font-mono text-xs ${card.color} mb-2`}>{card.title}</p>
+              <p className="text-sm text-paper/70 leading-relaxed">{card.body}</p>
+            </TiltCard>
           </motion.div>
         ))}
       </div>

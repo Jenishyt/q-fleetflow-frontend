@@ -41,6 +41,36 @@ export default function OptimizePage() {
         Run the fleet optimizer
       </motion.h1>
 
+      <motion.p
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+        className="text-paper/60 text-sm mb-6 max-w-2xl"
+      >
+        Runs the Q-bit register optimizer end to end and returns every non-dominated
+        trade-off plan it found — not one "best" answer, but the full frontier of
+        cost-vs-emissions-vs-schedule options.
+      </motion.p>
+
+      <details className="mb-8 group">
+        <summary className="text-xs text-brass-bright cursor-pointer select-none">
+          What do these inputs and outputs mean?
+        </summary>
+        <div className="mt-3 grid md:grid-cols-2 gap-6 text-xs text-paper/60 border rule rounded-sm p-4 bg-ink-raised/50">
+          <div>
+            <p className="text-paper/80 mb-1 font-medium">Inputs</p>
+            <p><b>Population</b> — how many candidate fleet plans are evaluated per generation. Higher = more thorough search, slower run.</p>
+            <p className="mt-1"><b>Generations</b> — how many rounds of improvement the optimizer runs. Higher = more time to converge.</p>
+            <p className="mt-1"><b>Seed</b> — fixes the random number sequence so the same seed always reproduces the same result.</p>
+          </div>
+          <div>
+            <p className="text-paper/80 mb-1 font-medium">Outputs (per plan)</p>
+            <p><b>Cost</b> — total fuel + EU ETS carbon cost in USD for that plan.</p>
+            <p className="mt-1"><b>GHG intensity</b> — well-to-wake carbon intensity in gCO2e/MJ, checked against the FuelEU Maritime limit.</p>
+            <p className="mt-1"><b>Schedule risk</b> — hours a plan's voyages exceed the weekly sailing window (cost-equivalent).</p>
+            <p className="mt-1"><b>Compliant</b> — whether that plan's GHG intensity is under the year's FuelEU limit.</p>
+          </div>
+        </div>
+      </details>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-4 mb-8"
