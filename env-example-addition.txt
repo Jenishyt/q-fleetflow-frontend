@@ -1,0 +1,3 @@
+
+# Optional: where the "Download backend" button points (default: /q-forge-backend.zip in /public)
+NEXT_PUBLIC_BACKEND_DOWNLOAD_URL=

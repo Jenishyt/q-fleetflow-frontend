@@ -5,6 +5,7 @@ import Preloader from "@/components/Preloader";
 import { ToastProvider } from "@/components/Toast";
 import Ambient from "@/components/Ambient";
 import CommandPalette from "@/components/CommandPalette";
+import WelcomeModal from "@/components/WelcomeModal";
 
 export const metadata: Metadata = {
   title: "Q-FORGE",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Ambient />
             <Nav />
             <CommandPalette />
+            <WelcomeModal />
             <main className="flex-1">{children}</main>
           </Preloader>
         </ToastProvider>

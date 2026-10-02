@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BackendPill } from "@/components/WelcomeModal";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -60,6 +61,7 @@ export default function Nav() {
           ))}
         </nav>
 
+        <BackendPill />
         <button
           onClick={() => window.dispatchEvent(new Event("open-palette"))}
           className="hidden md:flex items-center gap-2 border rule rounded-full px-3 py-1 text-xs text-paper/50 hover:text-paper hover:border-brass transition-colors"
