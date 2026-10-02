@@ -12,6 +12,7 @@ const PAGES: Cmd[] = [
   { id: "p-predict", label: "Fuel prediction explorer", hint: "/predict", href: "/predict", group: "Go to" },
   { id: "p-opt", label: "Run the optimizer", hint: "/optimize", href: "/optimize", group: "Go to" },
   { id: "p-cmp", label: "Benchmark comparison", hint: "/compare", href: "/compare", group: "Go to" },
+  { id: "p-sol", label: "Complete solution (pipeline)", hint: "/solution", href: "/solution", group: "Go to" },
   { id: "p-map", label: "Maritime route map", hint: "/map", href: "/map", group: "Go to" },
   { id: "p-ports", label: "Ports database", hint: "/ports", href: "/ports", group: "Go to" },
   { id: "p-fleet", label: "Fleet registry", hint: "/fleet", href: "/fleet", group: "Go to" },

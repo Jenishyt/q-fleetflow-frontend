@@ -99,11 +99,18 @@ export default function WelcomeModal() {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="border border-brass/50 bg-brass/5 rounded-sm p-4 flex flex-col">
                 <div className="font-display text-lg mb-1">Full experience</div>
-                <ol className="text-xs text-paper/70 space-y-1.5 list-decimal list-inside mb-4">
-                  <li>Download the backend (zip) and extract it</li>
-                  <li>Windows: double-click <code>setup_and_run.bat</code><br /><span className="pl-4 text-paper/50">Mac/Linux: <code>bash setup_and_run.sh</code></span></li>
-                  <li>Keep that window open — this page connects by itself</li>
-                </ol>
+                <div className="space-y-2.5 mb-4">
+                  {[
+                    <>Download the backend <b className="text-brass-bright">.zip</b> and extract it</>,
+                    <>Double-click <code className="bg-brass/20 px-1.5 py-0.5 rounded-sm">setup_and_run.bat</code><span className="block text-paper/50 mt-0.5">Mac/Linux: <code>bash setup_and_run.sh</code></span></>,
+                    <>Keep the black window open — this page <b className="text-brass-bright">connects by itself</b></>,
+                  ].map((t, i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-sm bg-ink/50 border border-brass/25 px-3 py-2">
+                      <span className="shrink-0 w-6 h-6 rounded-full bg-brass text-ink text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                      <span className="text-sm text-paper/90 leading-snug">{t}</span>
+                    </div>
+                  ))}
+                </div>
                 <a href={DOWNLOAD_URL} download className="btn-primary text-center mt-auto">⬇ Download backend</a>
                 <p className="text-[10px] text-paper/40 mt-2">Needs Python 3.11 or 3.12. Use Chrome, Edge or Firefox (Safari blocks local connections).</p>
               </div>

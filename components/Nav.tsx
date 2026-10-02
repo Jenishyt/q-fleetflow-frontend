@@ -11,6 +11,7 @@ const links = [
   { href: "/predict", label: "Predict" },
   { href: "/optimize", label: "Run optimizer" },
   { href: "/compare", label: "Compare" },
+  { href: "/solution", label: "Solution" },
   { href: "/map", label: "Map" },
   { href: "/ports", label: "Ports" },
   { href: "/fleet", label: "Fleet" },
@@ -56,7 +57,7 @@ export default function Nav() {
               >
                 {l.label}
               </span>
-              {l.href === "/map" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
+              {l.href === "/solution" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
             </Link>
           ))}
         </nav>
