@@ -17,12 +17,12 @@ const roadmap = [
   {
     title: "Risk intelligence",
     desc: "Geopolitical, piracy, and weather risk scoring per route.",
-    blocker: "Needs a licensed threat-intelligence data source to be real rather than decorative.",
+    blocker: "Static, indicative advisory + emission-control zones now ship on the map. Live threat scoring still needs a licensed feed.",
   },
   {
     title: "Satellite & GIS overlay",
     desc: "Live sea-state and vessel-position imagery layered on the route map.",
-    blocker: "Needs a satellite imagery API — currently out of scope for a laptop-scale prototype.",
+    blocker: "Satellite basemap, nautical seamarks and live rain radar are on the map. Live sea-state / vessel-position imagery still needs a paid imagery or AIS API.",
   },
   {
     title: "Unified report rollup",

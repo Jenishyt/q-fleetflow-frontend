@@ -24,10 +24,10 @@ export default function Nav() {
 
   return (
     <header className="border-b rule sticky top-0 z-50 backdrop-blur bg-ink/85">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-baseline gap-2 group">
-          <span className="glitch-logo font-display text-xl tracking-tight" data-text="Q-FleetFlow">
-            Q-FleetFlow
+          <span className="glitch-logo font-display text-xl tracking-tight" data-text="Q-FORGE">
+            Q-FORGE
           </span>
           <span className="font-mono text-[11px] text-paper/50">v0.1</span>
         </Link>
@@ -55,9 +55,18 @@ export default function Nav() {
               >
                 {l.label}
               </span>
+              {l.href === "/map" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
             </Link>
           ))}
         </nav>
+
+        <button
+          onClick={() => window.dispatchEvent(new Event("open-palette"))}
+          className="hidden md:flex items-center gap-2 border rule rounded-full px-3 py-1 text-xs text-paper/50 hover:text-paper hover:border-brass transition-colors"
+          aria-label="Open command palette"
+        >
+          Search <kbd className="font-mono text-[10px] text-paper/40">Ctrl K</kbd>
+        </button>
 
         {/* Mobile hamburger */}
         <button

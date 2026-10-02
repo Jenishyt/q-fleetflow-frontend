@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, Vessel } from "@/lib/api";
 import Skeleton from "@/components/Skeleton";
+import { useToast } from "@/components/Toast";
 
 const VESSEL_CLASSES = ["container", "bulk_carrier", "tanker", "general_cargo"];
 const FUEL_TYPES = ["MDO", "VLSFO", "HFO", "LNG"];
@@ -15,6 +16,7 @@ export default function FleetPage() {
   const [vesselClass, setVesselClass] = useState("container");
   const [fuelType, setFuelType] = useState("VLSFO");
   const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   function refresh() {
     api.fleet().then((r) => setVessels(r.vessels)).catch(() => setError("Could not load fleet — is the backend running?"));
@@ -26,11 +28,14 @@ export default function FleetPage() {
     if (!name.trim()) return;
     setSubmitting(true);
     try {
+      const registeredName = name;
       await api.registerVessel({ name, vessel_class: vesselClass, fuel_type: fuelType });
       setName("");
       refresh();
+      toast(`Registered "${registeredName}" as ${vesselClass}`, "success");
     } catch (e) {
       setError(e instanceof Error ? e.message : "registration failed");
+      toast("Vessel registration failed", "error");
     } finally {
       setSubmitting(false);
     }

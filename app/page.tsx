@@ -29,7 +29,7 @@ export default function OverviewPage() {
       <div className="grid md:grid-cols-[1.3fr_1fr] gap-12 items-start relative">
         <motion.div initial="hidden" animate="show" custom={0} variants={fadeUp}>
           <p className="font-mono text-xs text-brass-bright mb-3">Quantum-inspired optimization, laptop-scale</p>
-          <h1 className="font-display text-4xl md:text-5xl leading-[1.08] mb-5">
+          <h1 className="font-display text-4xl md:text-5xl leading-[1.08] mb-5 text-shine">
             Fuel prediction and fleet optimization for a decarbonizing shipping industry.
           </h1>
           <p className="text-paper/70 text-lg leading-relaxed max-w-xl">
@@ -56,12 +56,21 @@ export default function OverviewPage() {
                 Try a live prediction
               </motion.span>
             </Link>
+            <Link href="/map">
+              <motion.span
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-block border border-brass/60 text-brass-bright px-5 py-2.5 rounded-sm font-medium text-sm cursor-pointer hover:bg-brass/10"
+              >
+                Open the route map
+              </motion.span>
+            </Link>
             <Link href="/roadmap">
               <motion.span
                 whileHover={{ scale: 1.03 }}
                 className="inline-block px-5 py-2.5 rounded-sm font-medium text-sm cursor-pointer text-paper/50 hover:text-paper/80"
               >
-                What's coming next →
+                What&apos;s coming next →
               </motion.span>
             </Link>
           </div>
@@ -94,7 +103,7 @@ export default function OverviewPage() {
                   <span>$<AnimatedNumber value={r.cost} /></span>
                   <span className="text-paper/50 text-xs">
                     <AnimatedNumber value={r.feas} decimals={1} suffix="%" />{" "}
-                    <InfoTip term="feasible">Share of this algorithm's plans that pass the FuelEU Maritime carbon-intensity limit.</InfoTip>
+                    <InfoTip term="feasible">Share of this algorithm&apos;s plans that pass the FuelEU Maritime carbon-intensity limit.</InfoTip>
                   </span>
                 </div>
               </motion.div>
@@ -103,6 +112,39 @@ export default function OverviewPage() {
         </TiltCard>
         </motion.div>
       </div>
+
+
+      <motion.div
+        initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="mt-20 border rule rounded-sm bg-ink-raised/70 spot grid md:grid-cols-[1fr_1.1fr] overflow-hidden"
+      >
+        <div className="p-8">
+          <p className="font-mono text-xs text-brass-bright mb-3">New · Maritime route map</p>
+          <h2 className="font-display text-2xl mb-3">Plan a voyage on a real sea-lane network.</h2>
+          <p className="text-sm text-paper/70 leading-relaxed mb-5">
+            Pick any two ports, avoid Suez or the Red Sea, and get distance, ETA, fuel, CO₂ and an indicative EU ETS cost — then replay the voyage,
+            pin routes side by side, and see which chokepoints and advisory zones you cross.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[["Mumbai → Rotterdam", "INBOM", "NLRTM"], ["Singapore → Rotterdam", "SGSIN", "NLRTM"], ["Shanghai → Los Angeles", "CNSHA", "USLAX"]].map(([l, a, b]) => (
+              <Link key={l} href={`/map?from=${a}&to=${b}`} className="chip">{l}</Link>
+            ))}
+          </div>
+        </div>
+        <div className="relative min-h-[220px] border-t md:border-t-0 md:border-l rule">
+          <svg viewBox="0 0 400 220" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
+            <defs><radialGradient id="mg" cx="50%" cy="50%" r="70%"><stop offset="0%" stopColor="#1b4b5a" stopOpacity="0.5" /><stop offset="100%" stopColor="#0b1f2e" stopOpacity="0" /></radialGradient></defs>
+            <rect width="400" height="220" fill="url(#mg)" />
+            {[...Array(9)].map((_, i) => <line key={`h${i}`} x1="0" x2="400" y1={i * 28} y2={i * 28} stroke="#e7e4d6" strokeOpacity="0.05" />)}
+            {[...Array(15)].map((_, i) => <line key={`v${i}`} y1="0" y2="220" x1={i * 28} x2={i * 28} stroke="#e7e4d6" strokeOpacity="0.05" />)}
+            <motion.path d="M70,150 C110,170 150,120 200,128 S290,150 330,80" fill="none" stroke="#f4d9a6" strokeWidth="2.2" strokeDasharray="7 6" strokeLinecap="round"
+              initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ duration: 2.2, ease: "easeInOut", delay: 0.3 }} />
+            <circle cx="70" cy="150" r="5" fill="#6fd08c" /><circle cx="330" cy="80" r="5" fill="#f08a6b" />
+            <circle cx="200" cy="128" r="4" fill="#f4d9a6" stroke="#0b1f2e" strokeWidth="1.5" />
+          </svg>
+        </div>
+      </motion.div>
 
       <div className="mt-20 grid md:grid-cols-3 gap-8 border-t rule pt-10">
         {[
@@ -126,7 +168,7 @@ export default function OverviewPage() {
             viewport={{ once: true, margin: "-40px" }}
             transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <TiltCard className="p-1">
+            <TiltCard className="p-5 border rule rounded-sm bg-ink-raised/60 spot">
               <p className={`font-mono text-xs ${card.color} mb-2`}>{card.title}</p>
               <p className="text-sm text-paper/70 leading-relaxed">{card.body}</p>
             </TiltCard>

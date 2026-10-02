@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { api, Port } from "@/lib/api";
 import Skeleton from "@/components/Skeleton";
+import EmptyState from "@/components/EmptyState";
 
 export default function PortsPage() {
   const [ports, setPorts] = useState<Port[] | null>(null);
@@ -71,7 +72,15 @@ export default function PortsPage() {
           </tbody>
         </table>
       )}
-      {ports && filtered.length === 0 && <p className="text-paper/40 text-sm mt-4">No ports match "{query}"</p>}
+      {ports && filtered.length === 0 && (
+        <div className="mt-4">
+          <EmptyState
+            title="No ports match your search"
+            description={`Nothing in the database matches "${query}". Try a port name, country, or a UN/LOCODE like INMAA.`}
+            action={<button onClick={() => setQuery("")} className="text-sm text-brass-bright hover:text-brass">Clear search</button>}
+          />
+        </div>
+      )}
     </div>
   );
 }

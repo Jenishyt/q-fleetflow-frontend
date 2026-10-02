@@ -2,23 +2,44 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, ParetoPoint, LedgerResponse } from "@/lib/api";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import EmptyState from "@/components/EmptyState";
+import { useToast } from "@/components/Toast";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 type Filter = "all" | "compliant" | "non-compliant";
 
+const A_COLOR = "#7C3AED";
+const B_COLOR = "#33b5e5";
+const usd = (v: number) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+const COMPARE_ROWS: { label: string; get: (l: LedgerResponse) => number; fmt: (v: number) => string }[] = [
+  { label: "Fuel cost", get: (l) => l.fuel_cost_usd, fmt: usd },
+  { label: "EU ETS cost", get: (l) => l.ets_cost_usd, fmt: usd },
+  { label: "Total cost", get: (l) => l.fuel_cost_usd + l.ets_cost_usd + l.demand_penalty_usd, fmt: usd },
+  { label: "FuelEU intensity", get: (l) => l.fueleu_intensity, fmt: (v) => `${v.toFixed(2)} g/MJ` },
+  { label: "CO2 (tank-to-wake)", get: (l) => l.total_co2_ttw_t, fmt: (v) => `${v.toFixed(1)} t` },
+  { label: "Schedule risk", get: (l) => l.risk_hours, fmt: (v) => `${v.toFixed(1)} h` },
+];
+
 export default function RunExplorerPage() {
   const params = useParams<{ runId: string }>();
+  const { toast } = useToast();
   const [front, setFront] = useState<ParetoPoint[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [ledger, setLedger] = useState<LedgerResponse | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [sortKey, setSortKey] = useState<"cost" | "ghg" | "risk">("cost");
+  const [pinA, setPinA] = useState<string | null>(null);
+  const [pinB, setPinB] = useState<string | null>(null);
+  const [ledgerA, setLedgerA] = useState<LedgerResponse | null>(null);
+  const [ledgerB, setLedgerB] = useState<LedgerResponse | null>(null);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/run/${params.runId}`)
@@ -28,15 +49,28 @@ export default function RunExplorerPage() {
       })
       .then((data) => {
         setFront(data.pareto_front);
-        if (data.pareto_front.length > 0) setSelectedPlan(data.pareto_front[0].plan_id);
+        const wanted = new URLSearchParams(window.location.search).get("plan");
+        const exists = wanted && data.pareto_front.some((p: ParetoPoint) => p.plan_id === wanted);
+        if (exists) setSelectedPlan(wanted);
+        else if (data.pareto_front.length > 0) setSelectedPlan(data.pareto_front[0].plan_id);
       })
-      .catch(() => setError("Could not load this run — it may not exist, or the API isn't reachable."));
+      .catch(() => setError("not-found"));
   }, [params.runId]);
 
   useEffect(() => {
     if (!selectedPlan) return;
     api.ledger(params.runId, selectedPlan).then(setLedger).catch(() => setLedger(null));
   }, [selectedPlan, params.runId]);
+
+  useEffect(() => {
+    if (!pinA) { setLedgerA(null); return; }
+    api.ledger(params.runId, pinA).then(setLedgerA).catch(() => setLedgerA(null));
+  }, [pinA, params.runId]);
+
+  useEffect(() => {
+    if (!pinB) { setLedgerB(null); return; }
+    api.ledger(params.runId, pinB).then(setLedgerB).catch(() => setLedgerB(null));
+  }, [pinB, params.runId]);
 
   const filtered = useMemo(() => {
     if (!front) return [];
@@ -61,10 +95,53 @@ export default function RunExplorerPage() {
     };
   }, [front]);
 
+  async function copyShareLink() {
+    const url = `${window.location.origin}/run/${params.runId}${selectedPlan ? `?plan=${selectedPlan}` : ""}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Share link copied to clipboard", "success");
+    } catch {
+      toast("Couldn't access clipboard — copy the address bar URL instead", "error");
+    }
+  }
+
+  function pin(which: "A" | "B") {
+    if (!selectedPlan) return;
+    if (which === "A") { setPinA(pinA === selectedPlan ? null : selectedPlan); }
+    else { setPinB(pinB === selectedPlan ? null : selectedPlan); }
+  }
+
+  const colorFor = (p: ParetoPoint) =>
+    p.plan_id === selectedPlan ? "#d2a35c"
+      : p.plan_id === pinA ? A_COLOR
+      : p.plan_id === pinB ? B_COLOR
+      : p.fueleu_compliant ? "#4a7c59" : "#c4553d";
+  const sizeFor = (p: ParetoPoint) =>
+    p.plan_id === selectedPlan ? 11 : p.plan_id === pinA || p.plan_id === pinB ? 9 : 6;
+
+  const summary = useMemo(() => {
+    if (!ledgerA || !ledgerB) return null;
+    const totalA = ledgerA.fuel_cost_usd + ledgerA.ets_cost_usd + ledgerA.demand_penalty_usd;
+    const totalB = ledgerB.fuel_cost_usd + ledgerB.ets_cost_usd + ledgerB.demand_penalty_usd;
+    const costPct = ((totalB - totalA) / totalA) * 100;
+    const ghg = ledgerB.fueleu_intensity - ledgerA.fueleu_intensity;
+    return `Plan B costs ${Math.abs(costPct).toFixed(1)}% ${costPct < 0 ? "less" : "more"} than Plan A, and its carbon intensity is ${Math.abs(ghg).toFixed(2)} gCO2e/MJ ${ghg < 0 ? "lower" : "higher"}.`;
+  }, [ledgerA, ledgerB]);
+
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-14">
-        <p className="text-alert text-sm">{error}</p>
+      <div className="max-w-3xl mx-auto px-6 py-14">
+        <EmptyState
+          title="Run not found"
+          description="This run doesn't exist on the backend — it may have been cleared, or the API isn't reachable. Runs are stored by the backend that created them."
+          action={
+            <Link href="/optimize">
+              <motion.span whileHover={{ scale: 1.04 }} className="inline-block bg-brass text-ink px-4 py-2 rounded-sm text-sm font-medium">
+                Start a new run
+              </motion.span>
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -88,9 +165,20 @@ export default function RunExplorerPage() {
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-mono text-xs text-brass-bright mb-3">
         Run {params.runId}
       </motion.p>
-      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl mb-6">
-        Pareto explorer
-      </motion.h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="font-display text-3xl">
+          Pareto explorer
+        </motion.h1>
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={copyShareLink}
+          title="Link works for anyone who can reach the backend that holds this run"
+          className="text-xs border rule rounded-sm px-3 py-2 text-paper/70 hover:text-paper hover:border-brass transition-colors"
+        >
+          Copy share link
+        </motion.button>
+      </div>
 
       <details className="mb-6">
         <summary className="text-xs text-brass-bright cursor-pointer select-none">What is a Pareto front?</summary>
@@ -98,12 +186,12 @@ export default function RunExplorerPage() {
           Every point below is a fleet plan where you can't improve one objective (cost, GHG, or
           schedule risk) without making another one worse — that's what "non-dominated" means.
           There's no single "best" plan; the frontier shows you the real trade-offs so you pick
-          the one that fits your priorities.
+          the one that fits your priorities. Pin two plans as A and B to compare them side by side.
         </p>
       </details>
 
       {stats && (
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard label="Plans found" value={stats.total} delay={0} />
           <StatCard label="Compliant" value={stats.compliantPct} suffix="%" decimals={0} delay={0.06} />
           <StatCard label="Cheapest" value={stats.minCost} prefix="$" delay={0.12} />
@@ -114,11 +202,7 @@ export default function RunExplorerPage() {
       <div className="flex items-center gap-6 mb-4">
         <div className="flex gap-1">
           {(["all", "compliant", "non-compliant"] as Filter[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="relative text-xs px-3 py-1.5 rounded-full"
-            >
+            <button key={f} onClick={() => setFilter(f)} className="relative text-xs px-3 py-1.5 rounded-full">
               {filter === f && (
                 <motion.span
                   layoutId="filter-pill"
@@ -126,9 +210,7 @@ export default function RunExplorerPage() {
                   transition={{ type: "spring", stiffness: 500, damping: 32 }}
                 />
               )}
-              <span className={`relative z-10 ${filter === f ? "text-ink" : "text-paper/60 hover:text-paper"}`}>
-                {f}
-              </span>
+              <span className={`relative z-10 ${filter === f ? "text-ink" : "text-paper/60 hover:text-paper"}`}>{f}</span>
             </button>
           ))}
         </div>
@@ -158,10 +240,8 @@ export default function RunExplorerPage() {
                 z: filtered.map((p) => p.J3_schedule_risk),
                 text: filtered.map((p) => p.plan_id),
                 marker: {
-                  size: filtered.map((p) => (p.plan_id === selectedPlan ? 11 : 6)),
-                  color: filtered.map((p) =>
-                    p.plan_id === selectedPlan ? "#d2a35c" : p.fueleu_compliant ? "#4a7c59" : "#c4553d"
-                  ),
+                  size: filtered.map(sizeFor),
+                  color: filtered.map(colorFor),
                   line: filtered.map((p) => (p.plan_id === selectedPlan ? { color: "#e7e4d6", width: 2 } : {})) as any,
                 },
               } as any,
@@ -188,37 +268,47 @@ export default function RunExplorerPage() {
             }}
           />
           <p className="text-xs text-paper/40 px-3 pb-2 font-mono">
-            green = compliant, rust = non-compliant, gold = selected. Click a point, or a row below, to inspect it.
+            green = compliant, rust = non-compliant, gold = selected, violet = pinned A, cyan = pinned B.
           </p>
 
           <div className="max-h-56 overflow-y-auto border-t rule mt-1">
-            <table className="w-full text-xs">
-              <tbody className="font-mono">
-                <AnimatePresence>
-                  {sorted.map((p) => (
-                    <motion.tr
-                      key={p.plan_id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onClick={() => setSelectedPlan(p.plan_id)}
-                      className={`cursor-pointer border-b rule/50 hover:bg-paper/5 transition-colors ${
-                        p.plan_id === selectedPlan ? "bg-brass/10" : ""
-                      }`}
-                    >
-                      <td className="py-1.5 px-3 text-paper/60">{p.plan_id}</td>
-                      <td className="py-1.5 px-3">${p.J1_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-1.5 px-3">{p.J2_ghg_intensity.toFixed(1)}</td>
-                      <td className="py-1.5 px-3">{p.J3_schedule_risk.toFixed(0)}</td>
-                      <td className={`py-1.5 px-3 ${p.fueleu_compliant ? "text-signal" : "text-alert"}`}>
-                        {p.fueleu_compliant ? "ok" : "no"}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+            {sorted.length === 0 ? (
+              <div className="p-4">
+                <EmptyState title="No plans match this filter" description="Try switching back to “all” — this run has no plans in that category." />
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                <tbody className="font-mono">
+                  <AnimatePresence>
+                    {sorted.map((p) => (
+                      <motion.tr
+                        key={p.plan_id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedPlan(p.plan_id)}
+                        className={`cursor-pointer border-b rule/50 hover:bg-paper/5 transition-colors ${
+                          p.plan_id === selectedPlan ? "bg-brass/10" : ""
+                        }`}
+                      >
+                        <td className="py-1.5 px-3 text-paper/60">
+                          {p.plan_id}
+                          {p.plan_id === pinA && <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full text-white" style={{ background: A_COLOR }}>A</span>}
+                          {p.plan_id === pinB && <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full text-ink" style={{ background: B_COLOR }}>B</span>}
+                        </td>
+                        <td className="py-1.5 px-3">{usd(p.J1_cost_usd)}</td>
+                        <td className="py-1.5 px-3">{p.J2_ghg_intensity.toFixed(1)}</td>
+                        <td className="py-1.5 px-3">{p.J3_schedule_risk.toFixed(0)}</td>
+                        <td className={`py-1.5 px-3 ${p.fueleu_compliant ? "text-signal" : "text-alert"}`}>
+                          {p.fueleu_compliant ? "ok" : "no"}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
@@ -226,6 +316,25 @@ export default function RunExplorerPage() {
           <p className="font-mono text-xs text-paper/50 mb-3">
             Inspecting <span className="text-paper">{selectedPlan}</span>
           </p>
+
+          <div className="flex gap-2 mb-4">
+            {(["A", "B"] as const).map((w) => {
+              const pinned = (w === "A" ? pinA : pinB) === selectedPlan;
+              const color = w === "A" ? A_COLOR : B_COLOR;
+              return (
+                <motion.button
+                  key={w}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => pin(w)}
+                  className="text-xs rounded-sm px-3 py-1.5 border transition-colors"
+                  style={pinned ? { background: color, borderColor: color, color: w === "A" ? "#fff" : "#0b1f2e" } : { borderColor: color, color }}
+                >
+                  {pinned ? `Unpin ${w}` : `Pin as ${w}`}
+                </motion.button>
+              );
+            })}
+          </div>
 
           <AnimatePresence mode="wait">
             {ledger && (
@@ -237,8 +346,8 @@ export default function RunExplorerPage() {
                 transition={{ duration: 0.25 }}
                 className="space-y-5"
               >
-                <Metric label="Fuel cost" value={`$${ledger.fuel_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
-                <Metric label="EU ETS cost" value={`$${ledger.ets_cost_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} note="assumption-based EUA price" />
+                <Metric label="Fuel cost" value={usd(ledger.fuel_cost_usd)} />
+                <Metric label="EU ETS cost" value={usd(ledger.ets_cost_usd)} note="assumption-based EUA price" />
                 <Metric
                   label="FuelEU intensity"
                   value={`${ledger.fueleu_intensity.toFixed(2)} vs limit ${ledger.fueleu_limit.toFixed(2)}`}
@@ -263,6 +372,78 @@ export default function RunExplorerPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {(pinA || pinB) && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-10 border rule rounded-sm bg-ink-raised p-5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-display text-lg">Side-by-side comparison</p>
+              <button onClick={() => { setPinA(null); setPinB(null); }} className="text-xs text-brass-bright hover:text-brass">
+                Clear both ×
+              </button>
+            </div>
+
+            {!(pinA && pinB) ? (
+              <p className="text-sm text-paper/50">
+                Plan {pinA ? "A" : "B"} pinned. Select another plan in the table or 3D plot and pin it as {pinA ? "B" : "A"} to compare.
+              </p>
+            ) : !(ledgerA && ledgerB) ? (
+              <p className="text-sm text-paper/50 font-mono">Loading both ledgers...</p>
+            ) : (
+              <>
+                {summary && <p className="text-sm text-paper/80 mb-4">{summary}</p>}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b rule text-left font-mono text-xs text-paper/50">
+                        <th className="py-2 font-normal">Metric</th>
+                        <th className="py-2 font-normal" style={{ color: A_COLOR }}>A · {pinA}</th>
+                        <th className="py-2 font-normal" style={{ color: B_COLOR }}>B · {pinB}</th>
+                        <th className="py-2 font-normal">Δ (B − A)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono">
+                      {COMPARE_ROWS.map((row, i) => {
+                        const a = row.get(ledgerA);
+                        const b = row.get(ledgerB);
+                        const d = b - a;
+                        const color = Math.abs(d) < 1e-9 ? "text-paper/40" : d < 0 ? "text-signal" : "text-alert";
+                        return (
+                          <motion.tr
+                            key={row.label}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="border-b rule/50"
+                          >
+                            <td className="py-2 text-paper/70 font-sans">{row.label}</td>
+                            <td className="py-2">{row.fmt(a)}</td>
+                            <td className="py-2">{row.fmt(b)}</td>
+                            <td className={`py-2 ${color}`}>{d > 0 ? "+" : d < 0 ? "−" : ""}{row.fmt(Math.abs(d))}</td>
+                          </motion.tr>
+                        );
+                      })}
+                      <tr>
+                        <td className="py-2 text-paper/70 font-sans">FuelEU compliant</td>
+                        <td className={`py-2 ${ledgerA.fueleu_compliant ? "text-signal" : "text-alert"}`}>{ledgerA.fueleu_compliant ? "yes" : "no"}</td>
+                        <td className={`py-2 ${ledgerB.fueleu_compliant ? "text-signal" : "text-alert"}`}>{ledgerB.fueleu_compliant ? "yes" : "no"}</td>
+                        <td className="py-2 text-paper/40">—</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-paper/40 mt-3">Green Δ = B is lower (better) on that metric; rust = B is higher.</p>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
