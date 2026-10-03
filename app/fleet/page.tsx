@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api, Vessel } from "@/lib/api";
 import Skeleton from "@/components/Skeleton";
 import { useToast } from "@/components/Toast";
+import BackendOffline, { isOffline } from "@/components/BackendOffline";
 
 const VESSEL_CLASSES = ["container", "bulk_carrier", "tanker", "general_cargo"];
 const FUEL_TYPES = ["MDO", "VLSFO", "HFO", "LNG"];
@@ -12,6 +13,7 @@ const FUEL_TYPES = ["MDO", "VLSFO", "HFO", "LNG"];
 export default function FleetPage() {
   const [vessels, setVessels] = useState<Vessel[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
   const [name, setName] = useState("");
   const [vesselClass, setVesselClass] = useState("container");
   const [fuelType, setFuelType] = useState("VLSFO");
@@ -19,7 +21,7 @@ export default function FleetPage() {
   const { toast } = useToast();
 
   function refresh() {
-    api.fleet().then((r) => setVessels(r.vessels)).catch(() => setError("Could not load fleet — is the backend running?"));
+    api.fleet().then((r) => setVessels(r.vessels)).then(() => setOffline(false)).catch((e) => { if (isOffline(e)) setOffline(true); else setError("Could not load fleet."); });
   }
 
   useEffect(refresh, []);
@@ -34,6 +36,7 @@ export default function FleetPage() {
       refresh();
       toast(`Registered "${registeredName}" as ${vesselClass}`, "success");
     } catch (e) {
+      if (isOffline(e)) { setOffline(true); toast("Backend not connected", "error"); return; }
       setError(e instanceof Error ? e.message : "registration failed");
       toast("Vessel registration failed", "error");
     } finally {
@@ -93,8 +96,9 @@ export default function FleetPage() {
         </div>
       </div>
 
+      {offline && <div className="mb-6"><BackendOffline what="The fleet registry" onOnline={refresh} /></div>}
       {error && <p className="text-alert text-sm mb-4">{error}</p>}
-      {!vessels && !error && (
+      {!vessels && !error && !offline && (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
         </div>

@@ -417,8 +417,7 @@ export default function MapStudio() {
                       )}
                       {scenarioMatch && (
                         <div className="text-xs rounded-sm border border-brass/40 bg-brass/10 px-2.5 py-2 text-paper/80">
-                          Scenario file assumes <b>{fmt(scenarioMatch.distance_nm)} nm</b> for {scenarioMatch.name}; this deep-draft lane measures <b>{fmt(route.distanceNm)} nm</b>
-                          {" "}({route.distanceNm > scenarioMatch.distance_nm ? "+" : ""}{fmt(((route.distanceNm - scenarioMatch.distance_nm) / scenarioMatch.distance_nm) * 100)}%). Worth reconciling before presenting cost numbers.
+                          Optimizer scenario <b>{scenarioMatch.name}</b> uses a stylised <b>{fmt(scenarioMatch.distance_nm)} nm</b> planning distance (editable in scenario.yaml). This map measures the deep-draft sea lane at <b>{fmt(route.distanceNm)} nm</b>. The two are intentionally independent.
                         </div>
                       )}
                       {route.approximateApproach && <p className="text-[11px] text-paper/45">Port has no dedicated harbour approach in the lane graph — snapped to the nearest lane node.</p>}

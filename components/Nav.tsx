@@ -9,7 +9,7 @@ import { useState } from "react";
 const links = [
   { href: "/", label: "Overview" },
   { href: "/predict", label: "Predict" },
-  { href: "/optimize", label: "Run optimizer" },
+  { href: "/optimize", label: "Optimize" },
   { href: "/compare", label: "Compare" },
   { href: "/solution", label: "Solution" },
   { href: "/map", label: "Map" },
@@ -26,8 +26,8 @@ export default function Nav() {
 
   return (
     <header className="border-b rule sticky top-0 z-50 backdrop-blur bg-ink/85">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-baseline gap-2 group">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4 whitespace-nowrap">
+        <Link href="/" className="flex items-baseline gap-2 group shrink-0">
           <span className="glitch-logo font-display text-xl tracking-tight" data-text="Q-FORGE">
             Q-FORGE
           </span>
@@ -35,13 +35,13 @@ export default function Nav() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1" onMouseLeave={() => setHovered(null)}>
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" onMouseLeave={() => setHovered(null)}>
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onMouseEnter={() => setHovered(l.href)}
-              className="relative px-3 py-1.5 text-sm"
+              className="relative px-2.5 xl:px-3 py-1.5 text-sm"
             >
               {active === l.href && (
                 <motion.span
@@ -62,10 +62,10 @@ export default function Nav() {
           ))}
         </nav>
 
-        <BackendPill />
+        <div className="hidden lg:block shrink-0"><BackendPill /></div>
         <button
           onClick={() => window.dispatchEvent(new Event("open-palette"))}
-          className="hidden md:flex items-center gap-2 border rule rounded-full px-3 py-1 text-xs text-paper/50 hover:text-paper hover:border-brass transition-colors"
+          className="hidden xl:flex shrink-0 items-center gap-2 border rule rounded-full px-3 py-1 text-xs text-paper/50 hover:text-paper hover:border-brass transition-colors"
           aria-label="Open command palette"
         >
           Search <kbd className="font-mono text-[10px] text-paper/40">Ctrl K</kbd>
@@ -73,7 +73,7 @@ export default function Nav() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          className="lg:hidden flex flex-col gap-1.5 p-2"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label="Toggle menu"
         >
@@ -90,7 +90,7 @@ export default function Nav() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden border-t rule"
+            className="lg:hidden overflow-hidden border-t rule"
           >
             <div className="px-6 py-3 flex flex-col gap-1">
               {links.map((l) => (

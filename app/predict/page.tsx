@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import BackendOffline, { isOffline } from "@/components/BackendOffline";
 
 const VESSEL_CLASSES = ["container", "bulk_carrier", "tanker", "general_cargo"];
 const FUEL_TYPES = ["MDO", "VLSFO", "HFO", "LNG"];
@@ -26,19 +27,22 @@ export default function PredictPage() {
   const [result, setResult] = useState<PredictResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     const handle = setTimeout(() => {
       setLoading(true);
       setError(null);
+      setOffline(false);
       api
         .predict({ vessel_class: vesselClass, speed_kn: speedKn, draft_ratio: draftRatio, wind_kn: windKn, wave_hs_m: waveHsM, fuel_type: fuelType })
         .then((r) => setResult(r as PredictResult))
-        .catch((e) => setError(e instanceof Error ? e.message : "prediction failed"))
+        .catch((e) => { if (isOffline(e)) setOffline(true); else setError(e instanceof Error ? e.message : "prediction failed"); })
         .finally(() => setLoading(false));
     }, 220);
     return () => clearTimeout(handle);
-  }, [vesselClass, speedKn, draftRatio, windKn, waveHsM, fuelType]);
+  }, [vesselClass, speedKn, draftRatio, windKn, waveHsM, fuelType, retry]);
 
   const maxAbsShap = result ? Math.max(...result.shap_top3.map(([, v]) => Math.abs(v)), 0.001) : 1;
   const rangeSpan = result ? result.q90 * 1.3 : 1;
@@ -151,7 +155,8 @@ export default function PredictPage() {
             </AnimatePresence>
           </div>
 
-          {error && <p className="mt-4 text-sm text-alert">{error} — is the local backend running?</p>}
+          {offline && <div className="mt-4"><BackendOffline what="Live fuel prediction" onOnline={() => setRetry((r) => r + 1)} /></div>}
+          {error && <p className="mt-4 text-sm text-alert">{error}</p>}
         </motion.div>
       </div>
     </div>

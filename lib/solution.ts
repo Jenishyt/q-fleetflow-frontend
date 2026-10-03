@@ -33,7 +33,7 @@ export const PIPELINE: NodeData[] = [
     subs: [
       { title: "scenario.yaml", status: "built", text: "3 real port pairs, 6 fuels including hydrogen, and shore power as a decision variable. One scenario used everywhere." },
       { title: "factors.yaml", status: "built", text: "Every emission factor is either sourced or explicitly flagged as an assumption." },
-      { title: "Route-distance reconciliation", status: "progress", text: "Scenario assumes 500 / 800 / 350 nm for Chennai to Colombo / Singapore / Cochin; the deep-draft lane graph measures about 758 / 1,636 / 1,054 nm. Either update the YAML or label it a coastal-feeder assumption." },
+      { title: "Scenario distances are stylised", status: "progress", text: "The optimizer scenario uses 500 / 800 / 350 nm for Chennai to Colombo / Singapore / Cochin as planning inputs; the map measures about 758 / 1,636 / 1,054 nm. Disclosed in the UI and left unchanged on purpose: realistic distances would strain the 72 h/week schedule budget, so switching means redesigning the scenario and re-running the benchmark." },
     ] },
   { id: "geo", col: 1, row: 3, tag: "INPUT", title: "Ports & sea lanes", status: "built",
     one: "Where ships can go: ports, shipping lanes, chokepoints and zones.",

@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toast";
 import Celebration from "@/components/Celebration";
 import EmptyState from "@/components/EmptyState";
 import Skeleton from "@/components/Skeleton";
+import BackendOffline, { isOffline } from "@/components/BackendOffline";
 
 type SortKey = "cost" | "ghg" | "risk" | "compliant";
 
@@ -28,6 +29,7 @@ export default function OptimizePage() {
   const [seed, setSeed] = useState(42);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
   const [result, setResult] = useState<OptimizeResponse | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("cost");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -36,6 +38,7 @@ export default function OptimizePage() {
   async function handleRun() {
     setLoading(true);
     setError(null);
+    setOffline(false);
     setResult(null);
     try {
       const res = await api.optimize({ n_pop: nPop, n_generations: nGen, seed });
@@ -44,6 +47,7 @@ export default function OptimizePage() {
       toast(`Run ${res.run_id} complete: ${res.pareto_front.length} plans, ${compliant} compliant`, "success");
       if (compliant > 0) setCelebrate((c) => c + 1);
     } catch (e) {
+      if (isOffline(e)) { setOffline(true); toast("Backend not connected", "error"); return; }
       const msg = e instanceof Error ? `${e.message} — is the API running and reachable? Check NEXT_PUBLIC_API_URL.` : "Unknown error";
       setError(msg);
       toast("Optimizer run failed — see details below", "error");
@@ -145,6 +149,10 @@ export default function OptimizePage() {
         <span className="relative">{loading ? "Running..." : "Run optimizer"}</span>
       </motion.button>
 
+      <p className="mt-4 text-[11px] text-paper/40 max-w-xl">Scenario distances (500 / 800 / 350 nm for Chennai→Colombo / Singapore / Cochin) are stylised planning inputs from scenario.yaml, not measured sea routes. The map shows measured lane distances.</p>
+
+      {offline && <div className="mt-6"><BackendOffline what="The optimizer" onOnline={() => setOffline(false)} /></div>}
+
       <AnimatePresence>
         {error && (
           <motion.p
@@ -163,7 +171,7 @@ export default function OptimizePage() {
           </div>
         )}
 
-        {!loading && !result && !error && (
+        {!loading && !result && !error && !offline && (
           <EmptyState
             title="No run yet"
             description="Set population, generations and a seed above, then run. Results land here as a sortable Pareto table."
