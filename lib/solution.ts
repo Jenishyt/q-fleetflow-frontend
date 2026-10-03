@@ -31,7 +31,8 @@ export const PIPELINE: NodeData[] = [
   { id: "config", col: 1, row: 2, tag: "INPUT", title: "Scenario & emission factors", status: "built",
     one: "The rules of the game: routes, fuels, prices and sourced emission factors.",
     subs: [
-      { title: "scenario.yaml", status: "built", text: "3 real port pairs, 6 fuels including hydrogen, and shore power as a decision variable. One scenario used everywhere." },
+      { title: "scenario.yaml", status: "built", text: "3 real port pairs, 6 fuels including hydrogen and ammonia (all six selectable on the short feeder), and shore power as a decision variable." },
+      { title: "Sensitivity grid & 4 case studies", status: "built", text: "12 carbon-price x alt-fuel-price scenarios plus base, demand-surge, green-push and tight-schedule cases, each solved by QIEA and NSGA-II. See /scenarios." },
       { title: "factors.yaml", status: "built", text: "Every emission factor is either sourced or explicitly flagged as an assumption." },
       { title: "Scenario distances are stylised", status: "progress", text: "The optimizer scenario uses 500 / 800 / 350 nm for Chennai to Colombo / Singapore / Cochin as planning inputs; the map measures about 758 / 1,636 / 1,054 nm. Disclosed in the UI and left unchanged on purpose: realistic distances would strain the 72 h/week schedule budget, so switching means redesigning the scenario and re-running the benchmark." },
     ] },
@@ -45,10 +46,11 @@ export const PIPELINE: NodeData[] = [
 
   { id: "pred", col: 2, row: 1, tag: "Q-PHYS", title: "Prediction engine", status: "built", href: "/predict", endpoint: "POST /predict",
     one: "Predicts how much fuel a ship burns at a given speed, draft and weather.",
-    stats: [["3.33%", "MAPE"], ["0.996", "R²"], ["12.7 ms", "per 100 rows"]],
+    stats: [["3.27%", "MAPE (10 splits)"], ["0.996", "R²"], ["12.7 ms", "per 100 rows"]],
     subs: [
       { title: "Physics prior (admiralty law)", status: "built", text: "Fuel grows with speed cubed. A physics floor keeps predictions sensible even outside the training data." },
       { title: "LightGBM residual correction", status: "built", text: "Learns the log-ratio between reality and the physics prior: F̂ = F_phys · exp(r)." },
+      { title: "Quantum-inspired model tuning", status: "built", text: "The same Q-bit register and rotation gates as the fleet optimizer choose which features the residual model sees and its five hyper-parameters (14 genes). Honest result: lowest mean error, but not significantly better than hand-set or random-search tuning; the physics prior is what matters (p = 0.002 vs plain LightGBM)." },
       { title: "SHAP explanations", status: "built", text: "Top-3 drivers for every prediction (exact TreeSHAP)." },
       { title: "Uncertainty band (q10–q90)", status: "built", text: "Measured coverage is 73.4%, slightly under the 75–90% target. Disclosed, not hidden." },
     ] },
@@ -76,17 +78,18 @@ export const PIPELINE: NodeData[] = [
     stats: [["144", "alleles"], ["~5–9 s", "per run"], ["10/10", "toy optimum"]],
     subs: [
       { title: "Q-bit register & rotation gates", status: "built", text: "Each gene holds a probability distribution over choices; gates nudge it toward better ones every generation." },
-      { title: "Repair-first constraints", status: "built", text: "Invalid plans (unavailable fuel, unmet demand) are fixed before scoring, not just penalised. This is QIEA's real edge: feasibility rate." },
-      { title: "3-objective fitness", status: "built", text: "Cost, GHG intensity and schedule risk, including the hotel-load (shore power vs onboard) calculation." },
+      { title: "Repair-first constraints", status: "built", text: "Invalid plans (unavailable fuel, unmet demand) are fixed before scoring, not just penalised. In the latest benchmark QIEA reaches 90.1% feasibility vs random search's 73.5%, but NSGA-II reaches 97.5%." },
+      { title: "3-objective fitness", status: "built", text: "Cost, GHG intensity and schedule risk (delay hours over the weekly window, which are non-zero in the base scenario and large in the tight-schedule case), including the hotel-load (shore power vs onboard) calculation. Fuel tonnes are reported in every ledger." },
       { title: "Pareto archive", status: "built", text: "Keeps every non-dominated plan found." },
-      { title: "Tuning vs NSGA-II", status: "planned", text: "NSGA-II still wins on hypervolume and convergence speed. Closing that gap hasn't been attempted." },
+      { title: "Tuning vs NSGA-II", status: "planned", text: "NSGA-II scores about 2x QIEA's hypervolume, converges faster and is more often compliant. Closing that gap hasn't been attempted." },
     ] },
-  { id: "bench", col: 3, row: 2, tag: "PROOF", title: "Benchmark suite", status: "progress", href: "/compare",
+  { id: "bench", col: 3, row: 2, tag: "PROOF", title: "Benchmark suite", status: "built", href: "/compare",
     one: "Tests QIEA honestly against four rivals, including where it loses.",
     subs: [
       { title: "4 baselines + Wilcoxon protocol", status: "built", text: "Greedy, random, weighted GA and NSGA-II on the same encoding and budget, 10 seeds." },
-      { title: "Convergence & scalability", status: "built", text: "Current results. NSGA-II reaches 91.8% of its ceiling by generation 150 vs QIEA's 70.3%. Both scale roughly linearly (3–12 routes), NSGA-II 15–18% faster." },
-      { title: "10-seed table on 144 alleles", status: "progress", text: "The table on /compare and the home page is from the old 60-allele encoding. Re-run pending." },
+      { title: "Convergence & scalability", status: "built", text: "Current results. By generation 150, NSGA-II is at 89.1% of its 400-generation ceiling vs QIEA's 68.0%. Both scale roughly linearly (3–12 routes), NSGA-II about 15–17% faster." },
+      { title: "Prediction-accuracy benchmark", status: "built", text: "QIEA-tuned physics+GBM vs hand-set, random-search-tuned, plain LightGBM, XGBoost, linear regression and physics-only, over 10 voyage-grouped splits." },
+      { title: "10-seed table (current encoding)", status: "built", text: "Re-run on 24 genes x 144 alleles after the scenario change: mean hypervolume NSGA-II 73.8B, weighted GA 45.1B (single point), QIEA 34.9B, random 30.4B; all Wilcoxon p < 0.01. NSGA-II also leads on cost and feasibility." },
     ] },
 
   { id: "pareto", col: 4, row: 1, tag: "OUTPUT", title: "Pareto explorer", status: "built", href: "/optimize",

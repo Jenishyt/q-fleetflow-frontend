@@ -354,6 +354,7 @@ export default function RunExplorerPage() {
                   status={ledger.fueleu_compliant ? "signal" : "alert"}
                   statusLabel={ledger.fueleu_compliant ? "compliant" : "non-compliant"}
                 />
+                {ledger.total_fuel_t !== undefined && ledger.total_fuel_t > 0 && <Metric label="Total fuel burned" value={`${ledger.total_fuel_t.toFixed(1)} t`} />}
                 <Metric label="Total CO2 (tank-to-wake)" value={`${ledger.total_co2_ttw_t.toFixed(1)} t`} />
                 <Metric label="Schedule risk" value={`${ledger.risk_hours.toFixed(1)} hours`} />
                 <Metric label="Legs" value={`${ledger.n_legs}`} />

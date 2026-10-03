@@ -7,10 +7,10 @@ import InfoTip from "@/components/InfoTip";
 import TiltCard from "@/components/TiltCard";
 
 const benchmarkRows = [
-  { algo: "Greedy heuristic", hv: 10.7, feas: 0, cost: 142551 },
-  { algo: "Random search", hv: 21.3, feas: 67.1, cost: 109018 },
-  { algo: "QIEA (ours)", hv: 22.7, feas: 86.9, cost: 109755, highlight: true },
-  { algo: "NSGA-II", hv: 27.7, feas: 73.0, cost: 61263 },
+  { algo: "Greedy heuristic", hv: 12.1, feas: 0, cost: 155598 },
+  { algo: "Random search", hv: 30.4, feas: 73.8, cost: 127761 },
+  { algo: "QIEA (ours)", hv: 34.9, feas: 88.9, cost: 128172, highlight: true },
+  { algo: "NSGA-II", hv: 73.8, feas: 97.2, cost: 68178 },
 ];
 
 const fadeUp = {
@@ -150,7 +150,7 @@ export default function OverviewPage() {
         {[
           {
             title: "Prediction engine", color: "text-depth",
-            body: "Admiralty cubic law prior, corrected by a LightGBM residual on the log-ratio. 3.33% MAPE, R²=0.996 on held-out voyages, 12.7ms per 100-row batch.",
+            body: "Admiralty cubic law prior, corrected by a LightGBM residual whose features and settings are chosen by our quantum-inspired optimizer. 3.27% MAPE, R²=0.996 on held-out voyages (10 splits, synthetic data).",
           },
           {
             title: "Compliance engine", color: "text-depth",
@@ -158,7 +158,7 @@ export default function OverviewPage() {
           },
           {
             title: "Honest benchmarking", color: "text-depth",
-            body: "NSGA-II wins on raw hypervolume (p=0.002). QIEA wins on feasibility rate (p=0.002) — repair-first constraint handling trades exploration for legality.",
+            body: "NSGA-II wins on hypervolume, cost and feasibility (p=0.002, 10 seeds). QIEA clearly beats random search. We publish the table including where we lose.",
           },
         ].map((card, i) => (
           <motion.div

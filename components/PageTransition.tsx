@@ -5,10 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, useAnimationControls } from "framer-motion";
 
 // Order of the nav: moving "forward" swaps the page in from the right, "back" from the left.
-const ORDER = ["/", "/predict", "/optimize", "/compare", "/solution", "/map", "/ports", "/fleet", "/roadmap"];
+const ORDER = ["/", "/predict", "/optimize", "/scenarios", "/compare", "/solution", "/map", "/model", "/ports", "/fleet", "/roadmap"];
 const NAMES: Record<string, string> = {
   "/": "Overview", "/predict": "Predict", "/optimize": "Optimize", "/compare": "Compare", "/solution": "Solution",
-  "/map": "Map", "/ports": "Ports", "/fleet": "Fleet", "/roadmap": "Roadmap",
+  "/map": "Map", "/scenarios": "Scenarios", "/model": "Math model", "/ports": "Ports", "/fleet": "Fleet", "/roadmap": "Roadmap",
 };
 const idx = (p: string) => { const i = ORDER.indexOf(p); return i >= 0 ? i : p.startsWith("/run") ? ORDER.indexOf("/optimize") : 0; };
 const nameOf = (p: string) => NAMES[p] ?? (p.startsWith("/run") ? "Results" : "Q-FORGE");

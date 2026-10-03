@@ -6,22 +6,28 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
-const links = [
+const mainLinks = [
   { href: "/", label: "Overview" },
   { href: "/predict", label: "Predict" },
   { href: "/optimize", label: "Optimize" },
+  { href: "/scenarios", label: "Scenarios" },
   { href: "/compare", label: "Compare" },
   { href: "/solution", label: "Solution" },
   { href: "/map", label: "Map" },
+];
+const moreLinks = [
+  { href: "/model", label: "Math model" },
   { href: "/ports", label: "Ports" },
   { href: "/fleet", label: "Fleet" },
   { href: "/roadmap", label: "Roadmap" },
 ];
+const links = [...mainLinks, ...moreLinks];
 
 export default function Nav() {
   const pathname = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const active = hovered ?? pathname;
 
   return (
@@ -36,7 +42,7 @@ export default function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" onMouseLeave={() => setHovered(null)}>
-          {links.map((l) => (
+          {mainLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -57,9 +63,33 @@ export default function Nav() {
               >
                 {l.label}
               </span>
-              {l.href === "/solution" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
+              {l.href === "/scenarios" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
             </Link>
           ))}
+          <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
+            <button
+              onClick={() => setMoreOpen((o) => !o)}
+              aria-expanded={moreOpen}
+              className={`px-2.5 xl:px-3 py-1.5 text-sm transition-colors ${moreLinks.some((l) => l.href === pathname) ? "text-brass-bright" : "text-paper/60 hover:text-paper"}`}
+            >
+              More <span className="text-[10px]">▾</span>
+            </button>
+            <AnimatePresence>
+              {moreOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.14 }} className="absolute right-0 top-full pt-2 z-50"
+                >
+                  <div className="glass rounded-sm py-1.5 min-w-[160px] shadow-2xl">
+                    {moreLinks.map((l) => (
+                      <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                        className={`block px-4 py-2 text-sm hover:bg-paper/10 ${pathname === l.href ? "text-brass-bright" : "text-paper/75"}`}>{l.label}</Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </nav>
 
         <div className="hidden lg:block shrink-0"><BackendPill /></div>

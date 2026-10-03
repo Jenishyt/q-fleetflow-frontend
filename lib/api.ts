@@ -18,7 +18,7 @@ export interface ParetoPoint {
 export interface OptimizeResponse { run_id: string; n_pop: number; n_generations: number; elapsed_s: number; pareto_front: ParetoPoint[] }
 export interface LedgerResponse {
   plan_id: string; fuel_cost_usd: number; ets_cost_usd: number; demand_penalty_usd: number;
-  fueleu_intensity: number; fueleu_limit: number; fueleu_compliant: boolean; total_co2_ttw_t: number;
+  fueleu_intensity: number; fueleu_limit: number; fueleu_compliant: boolean; total_co2_ttw_t: number; total_fuel_t?: number;
   risk_hours: number; n_legs: number;
 }
 export interface PredictRequest {
