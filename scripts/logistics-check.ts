@@ -1,0 +1,22 @@
+import { plan, DEFAULT_PARAMS, type Params, type Option } from "../lib/logistics/planner";
+const fmt = (o: Option) => o.legs.map((l) => `${l.vehicle.id}${l.role === "main" ? "" : "(" + l.role + ")"} ${l.from.id}>${l.to.id} ${Math.round(l.distKm)}km`).join(" | ");
+const show = (name: string, p: Partial<Params>) => {
+  const r = plan({ ...DEFAULT_PARAMS, ...p });
+  console.log(`\n== ${name}  (${r.ms.toFixed(0)} ms, ${r.expanded} expansions, ${r.options.length} options${r.deadlineMissed ? ", DEADLINE MISSED" : ""}${r.error ? ", ERROR " + r.error : ""})`);
+  for (const o of r.options.filter((x) => x.tags.length)) console.log(` ${o.tags.join("/").padEnd(18)} $${Math.round(o.totals.totalUsd).toLocaleString().padStart(9)}  ${(o.totals.hours / 24).toFixed(1).padStart(5)} d  ${(o.totals.co2Kg / 1000).toFixed(2).padStart(7)} tCO2e  ${fmt(o)}`);
+  if (r.baseline) console.log(` ${"All-road".padEnd(18)} $${Math.round(r.baseline.totals.totalUsd).toLocaleString().padStart(9)}  ${(r.baseline.totals.hours / 24).toFixed(1).padStart(5)} d  ${(r.baseline.totals.co2Kg / 1000).toFixed(2).padStart(7)} tCO2e`);
+};
+show("Delhi -> Mumbai, general 40 t", { from: "delhi", to: "mumbai" });
+show("Delhi -> Rotterdam, general 40 t", {});
+show("Bhopal -> Chennai, general 40 t", { from: "bhopal", to: "chennai" });
+show("Bengaluru -> Frankfurt, electronics 5 t", { from: "bengaluru", to: "frankfurt", cargo: "electronics", tonnes: 5, valuePerT: 50000, deadlineDays: 20 });
+show("Shanghai -> Chicago, general 40 t", { from: "shanghai", to: "chicago" });
+show("Delhi -> Varanasi, bulk 500 t", { from: "delhi", to: "varanasi", cargo: "bulk", tonnes: 500, valuePerT: 300 });
+show("Haldia -> Varanasi, bulk 500 t (waterway)", { from: "haldia", to: "varanasi", cargo: "bulk", tonnes: 500, valuePerT: 300 });
+show("Mumbai -> Delhi, reefer 18 t", { from: "mumbai", to: "delhi", cargo: "reefer", tonnes: 18 });
+show("Chennai -> Bengaluru, parcels 0.15 t", { from: "chennai", to: "bengaluru", cargo: "parcels", tonnes: 0.15 });
+show("Delhi -> Rotterdam, hazmat (no air)", { cargo: "hazmat", tonnes: 30 });
+show("Rotterdam -> Duisburg, bulk 800 t (barge)", { from: "rotterdam", to: "duisburg", cargo: "bulk", tonnes: 800, valuePerT: 300 });
+show("Delhi -> Rotterdam, deadline 10 d (impossible by sea)", { deadlineDays: 10 });
+show("Delhi -> Rotterdam with $200/t carbon", { carbonUsdPerT: 200 });
+show("Same place", { from: "delhi", to: "delhi" });

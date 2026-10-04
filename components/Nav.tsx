@@ -16,6 +16,7 @@ const mainLinks = [
   { href: "/map", label: "Map" },
 ];
 const moreLinks = [
+  { href: "/logistics", label: "Logistics" },
   { href: "/model", label: "Math model" },
   { href: "/ports", label: "Ports" },
   { href: "/fleet", label: "Fleet" },
@@ -31,7 +32,7 @@ export default function Nav() {
   const active = hovered ?? pathname;
 
   return (
-    <header className="border-b rule sticky top-0 z-50 backdrop-blur bg-ink/85">
+    <header className="border-b rule sticky top-0 z-[1050] backdrop-blur bg-ink/85">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4 whitespace-nowrap">
         <Link href="/" className="flex items-baseline gap-2 group shrink-0">
           <span className="glitch-logo font-display text-xl tracking-tight" data-text="Q-FORGE">
@@ -83,7 +84,7 @@ export default function Nav() {
                   <div className="glass rounded-sm py-1.5 min-w-[160px] shadow-2xl">
                     {moreLinks.map((l) => (
                       <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
-                        className={`block px-4 py-2 text-sm hover:bg-paper/10 ${pathname === l.href ? "text-brass-bright" : "text-paper/75"}`}>{l.label}</Link>
+                        className={`flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-paper/10 ${pathname === l.href ? "text-brass-bright" : "text-paper/75"}`}>{l.label}{l.href === "/logistics" && <span className="text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px">NEW</span>}</Link>
                     ))}
                   </div>
                 </motion.div>
