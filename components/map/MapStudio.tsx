@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { api, type Port, type RouteGeometry } from "@/lib/api";
@@ -14,6 +14,7 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useToast } from "@/components/Toast";
 import { BASE_LAYERS, DEFAULT_LAYERS, MAPTILER_KEY, OWM_KEY, OWM_LAYERS, type LayerState } from "./layers";
 import type { Pin } from "./MapCanvas";
+import MapTour, { type TourStep } from "./MapTour";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), { ssr: false });
 
@@ -114,6 +115,20 @@ function Stat({ label, children, sub }: { label: string; children: React.ReactNo
     </div>
   );
 }
+
+const TOUR_KEY = "qforge-maptour-v1";
+const TOUR_STEPS: TourStep[] = [
+  { id: "welcome", where: "center", action: "demo", title: "Your sea-route planner", body: <>A one-minute tour of everything this map can do. We loaded <b>Mumbai → Rotterdam</b> so you can watch each feature work.<div className="flex flex-wrap gap-1.5 mt-3">{["36 ports", "real shipping lanes", "Suez / Red Sea toggles", "live fuel model", "compare 4 routes", "voyage replay", "6 map layers", "shareable links"].map((t) => <span key={t} className="chip chip-static">{t}</span>)}</div></> },
+  { id: "ports", target: "ports", action: "plan", title: "1 · Choose your ports", body: <>Search by port, country or UN/LOCODE (use ↑ ↓ and Enter), or press <b>⇅</b> to swap. You can also just click ports on the map.</> },
+  { id: "map", where: "map", title: "2 · The map itself", body: <>Click a port: the first click sets the origin, the second the destination. Click open water for coordinates and the nearest port. Drag to pan, scroll to zoom. <b>Gold diamonds</b> are chokepoints; <b>red areas</b> are advisory zones and <b>blue areas</b> emission-control areas.</> },
+  { id: "options", target: "options", action: "plan", title: "3 · Reroute around trouble", body: <><b>Avoid Suez</b> sends ships round the Cape of Good Hope; <b>Avoid Red Sea</b> skips Bab-el-Mandeb. Distance, time and cost update instantly.</> },
+  { id: "vessel", target: "vessel", action: "plan", title: "4 · Describe the ship", body: <>Vessel class, fuel and speed drive the fuel model: our live prediction engine when the backend is running, a physics fallback otherwise. Fuel burn grows with speed cubed, so try the slider.</> },
+  { id: "results", target: "results", action: "plan", title: "5 · Read the results", body: <>Sea distance, transit time, fuel, tank-to-wake CO₂, fuel cost and an indicative EU ETS cost. Below that: the chokepoints passed and any advisory zones crossed.</> },
+  { id: "actions", target: "actions", action: "plan", title: "6 · Take action", body: <><b>Replay</b> sails a ship along the route (a simulation, not live AIS). <b>Fit</b> re-centres. <b>Pin to compare</b> saves a route; <b>Suez vs Cape</b> pins both alternatives; <b>Copy GeoJSON</b> exports the line.</> },
+  { id: "compare", target: "panelbody", action: "compare", title: "7 · Compare routes", body: <>Pinned routes (up to 4) sit side by side, with the best value on each metric in green. We pinned Suez vs Cape for you. Click a card to reload that route.</> },
+  { id: "layers", target: "panelbody", action: "layers", title: "8 · Layers", body: <>Switch between Dark, Ocean, Satellite and Light maps. Toggle seamarks, advisory areas, emission-control areas, the lane network behind every route, live rain radar and (with a free key) global weather.</> },
+  { id: "done", where: "center", action: "plan", title: "You're set", body: <>Your route lives in the page address, so you can share it. <b>Ctrl/⌘ K</b> jumps anywhere in the app. Reopen this tour any time with the <b>? Map tour</b> button.</> },
+];
 
 /** Read shareable state from the URL once (this component only ever renders in the browser). */
 function readQuery() {
@@ -282,16 +297,40 @@ export default function MapStudio() {
     return { dist: pins.reduce((a, b) => (b.route.distanceNm < a.route.distanceNm ? b : a)).id, days: min("days"), co2: min("co2T"), cost: min("totalUsd") };
   }, [pins, pinParams, params]);
 
+  /* ---------- guided tour ---------- */
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourPinned = useRef(false);
+  useEffect(() => {
+    let seen = false;
+    try { seen = localStorage.getItem(TOUR_KEY) === "1"; } catch {}
+    if (seen || init.origin) return;                       // first visit only, and never over a shared route link
+    const t = setTimeout(() => { setTourOpen(true); try { localStorage.setItem(TOUR_KEY, "1"); } catch {} }, 1400);
+    return () => clearTimeout(t);
+  }, [init.origin]);
+  const onTourAction = (a?: string) => {
+    if (a === "demo") { if (!origin || !dest) loadOD("INBOM", "NLRTM"); else setTab("plan"); }
+    else if (a === "plan") setTab("plan");
+    else if (a === "layers") setTab("layers");
+    else if (a === "compare") { if (pins.length === 0) { compareSuez(); tourPinned.current = true; } setTab("compare"); }
+  };
+  const onTourClose = () => {
+    setTourOpen(false); setTab("plan");
+    if (tourPinned.current) { setPins([]); setPinParams({}); tourPinned.current = false; }   // remove only the demo pins we created
+  };
+
   /* ---------- render ---------- */
   return (
     <div className="relative w-full h-[calc(100vh-61px)] min-h-[560px] overflow-hidden">
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" data-tour="map">
         <MapCanvas
           ports={ports} origin={origin} dest={dest} active={route} pins={pins} layers={layers} radarUrl={radarUrl}
           replayT={replay.on ? replay.t : null} fitSignal={fitSignal}
           onPortClick={pickPort} onSetOrigin={(p) => setOrigin(p)} onSetDest={(p) => setDest(p)}
         />
       </div>
+
+      <button onClick={() => setTourOpen(true)} className="absolute top-3 right-3 z-[900] glass rounded-full px-3.5 py-1.5 text-xs text-paper/80 hover:text-brass-bright hover:border-brass transition-colors" aria-label="Start the map tour">? Map tour</button>
+      <MapTour open={tourOpen} steps={TOUR_STEPS} onAction={onTourAction} onClose={onTourClose} />
 
       {/* vignette for depth */}
       <div className="pointer-events-none absolute inset-0 z-[500] [box-shadow:inset_0_0_120px_rgba(5,12,20,0.55)]" />
@@ -323,11 +362,11 @@ export default function MapStudio() {
           ))}
         </div>
 
-        <div className={`overflow-y-auto px-4 py-4 flex-1 ${collapsed ? "hidden md:block" : ""}`}>
+        <div data-tour="panelbody" className={`overflow-y-auto px-4 py-4 flex-1 ${collapsed ? "hidden md:block" : ""}`}>
           <AnimatePresence mode="wait">
             {tab === "plan" && (
               <motion.div key="plan" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
-                <div className="space-y-3">
+                <div className="space-y-3" data-tour="ports">
                   <PortPicker label="Origin" accent="#6fd08c" value={origin} ports={ports} onPick={setOrigin} exclude={dest?.locode} />
                   <div className="flex justify-center -my-1">
                     <motion.button whileTap={{ rotate: 180 }} onClick={swap} disabled={!origin && !dest} aria-label="Swap origin and destination"
@@ -347,12 +386,12 @@ export default function MapStudio() {
                   </div>
                 </div>
 
-                <div className="border-t rule pt-2">
+                <div className="border-t rule pt-2" data-tour="options">
                   <Toggle on={!!opts.avoidSuez} onChange={(v) => setOpts((o) => ({ ...o, avoidSuez: v }))} label="Avoid Suez Canal" hint="Reroutes via the Cape of Good Hope" />
                   <Toggle on={!!opts.avoidRedSea} onChange={(v) => setOpts((o) => ({ ...o, avoidRedSea: v }))} label="Avoid Red Sea" hint="Skips Bab-el-Mandeb entirely" />
                 </div>
 
-                <div className="border-t rule pt-3 space-y-3">
+                <div className="border-t rule pt-3 space-y-3" data-tour="vessel">
                   <div className="grid grid-cols-2 gap-3">
                     <label className="block">
                       <span className="font-mono text-[10px] uppercase tracking-wider text-paper/45">Vessel class</span>
@@ -381,7 +420,7 @@ export default function MapStudio() {
                 <AnimatePresence mode="wait">
                   {route && est ? (
                     <motion.div key={`${route.from.locode}${route.to.locode}${route.nodeIds.length}`} initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 26 }} className="space-y-3 border-t rule pt-4">
+                      transition={{ type: "spring", stiffness: 300, damping: 26 }} className="space-y-3 border-t rule pt-4" data-tour="results">
                       <div className="flex items-baseline justify-between">
                         <div className="font-display text-lg leading-tight">{route.from.name.split(" (")[0]} <span className="text-brass-bright">→</span> {route.to.name.split(" (")[0]}</div>
                       </div>
@@ -422,7 +461,7 @@ export default function MapStudio() {
                       )}
                       {route.approximateApproach && <p className="text-[11px] text-paper/45">Port has no dedicated harbour approach in the lane graph — snapped to the nearest lane node.</p>}
 
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="grid grid-cols-2 gap-2 pt-1" data-tour="actions">
                         <button className="btn-primary" onClick={() => setReplay((r) => ({ ...r, on: true, playing: true, rk: routeKey, t: r.rk === routeKey && r.t < 1 ? r.t : 0 }))}>▶ Replay voyage</button>
                         <button className="btn-ghost" onClick={() => setFitSignal((s) => s + 1)}>Fit to route</button>
                         <button className="btn-ghost" onClick={() => pinRoute(route, label(route), params)}>＋ Pin to compare</button>

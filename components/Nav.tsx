@@ -59,12 +59,17 @@ export default function Nav() {
               )}
               <span
                 className={`relative z-10 transition-colors ${
-                  pathname === l.href ? "text-brass-bright" : "text-paper/60 hover:text-paper"
+                  pathname === l.href ? "text-brass-bright" : l.href === "/solution" || l.href === "/map" ? "text-paper/90 hover:text-paper" : "text-paper/60 hover:text-paper"
                 }`}
               >
                 {l.label}
               </span>
-              {l.href === "/scenarios" && <span className="relative z-10 ml-1 text-[9px] font-mono text-ink bg-brass-bright rounded-sm px-1 py-px align-middle">NEW</span>}
+              {(l.href === "/solution" || l.href === "/map") && (
+                <span className="relative z-10 ml-1.5 inline-flex h-1.5 w-1.5 align-middle" title="Worth a look">
+                  <span className="absolute inset-0 rounded-full bg-brass-bright opacity-60 animate-ping" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-brass-bright" />
+                </span>
+              )}
             </Link>
           ))}
           <div className="relative" onMouseEnter={() => setMoreOpen(true)} onMouseLeave={() => setMoreOpen(false)}>
